@@ -1,9 +1,11 @@
 require("dotenv").config();
 const express = require("express");
 const cookiePserser = require("cookie-parser");
-const bodyParser = require("body-parser");
 const cors = require("cors");
+const bodyParser = require("body-parser");
 const routes = require("./router");
+
+const errorHandler = require("../middleware/error")
 
 const app = express();
 
@@ -17,12 +19,6 @@ app.use(
 );
 app.use(routes);
 
-app.use((err, _req, res, _next) => {
-  if (err) {
-    res.status(err.status || 500).json({
-      message: err.message,
-    });
-  }
-});
+app.use(errorHandler);
 
 module.exports = app;
