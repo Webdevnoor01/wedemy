@@ -20,7 +20,6 @@ const userSchema = Schema({
     password:{
         type:String,
         select:false,
-        required:[true, "Please enter your password"],
         minlength:[8, "Password at least 8 characters"],
     },
     avatar:{
@@ -28,8 +27,8 @@ const userSchema = Schema({
         url:String
     },
     role:{
-        type:Boolean,
-        default:false
+        type:String,
+        default:"user"
     },
     isVerified:{
         type:Boolean,
