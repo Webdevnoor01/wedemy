@@ -11,6 +11,7 @@ const User = require("../models/user.model");
 const hashService = require("../service/hash.service");
 const tokenService = require("../service/token.service");
 const mailService = require("../service/mail.service");
+const userService = require("../service/user.service")
 class UserController {
   // register user
   async register(req, res, next) {
@@ -145,13 +146,13 @@ class UserController {
       const {
         accessToken,
         accessTokenOptions,
-        refressToken,
-        refressTokenOptions,
+        refreshToken,
+        refreshTokenOptions,
       } = await tokenService.createToken({ id: user._id });
 
       // set accessToken and refressToken into cookie
       res.cookie("accessToken", accessToken, accessTokenOptions);
-      res.cookie("refressToken", refressToken, refressTokenOptions);
+      res.cookie("refreshToken", refreshToken, refreshTokenOptions);
 
       // set user session in redis
       const userPayload = { ...user._doc };
@@ -175,11 +176,102 @@ class UserController {
       res.cookie("accessToken", "", { maxAge: 1 });
       res.cookie("refreshToken", "", { maxAge: 1 });
 
+      // remove user from redis cache
+      const user = await redis.del(req.user._id);
       res.status(200).json({
         success: true,
         message: "User logout successfully",
       });
     } catch (error) {}
+  }
+
+  // update accessToken
+  async updateAccessToken(req, res, next) {
+    try {
+      const { refreshToken:token } = req.cookies;
+      // verify the refreshToken
+      const decoded = await tokenService.verifyRefreshToken(token);
+      const message = "Could not refresh the token";
+      if (!decoded) return next(new ErrorHandler(message, 400));
+
+      // check the session-> user is valid or not
+      const session = await redis.get(decoded.id);
+      if (!session) return next(new ErrorHandler(message, 400));
+
+      const user = JSON.parse(session);
+
+      // create new token
+      const {
+        accessToken,
+        accessTokenOptions,
+        refreshToken,
+        refreshTokenOptions,
+      } = await tokenService.createToken({ id: user.id });
+
+      // set token in the cookie 
+      res.cookie("accessToken", accessToken, accessTokenOptions)
+      res.cookie("refreshToken", refreshToken, refreshTokenOptions)
+
+      res.status(200).json({
+        success:true,
+        token:accessToken
+      })
+    } catch (error) {
+      console.log(error)
+      return next(new ErrorHandler(error.message, 400))
+    }
+  }
+
+  // get user info 
+  async getUserInfo(req, res, next) {
+    const userId = req.user?._id || req.user?.id
+    try {
+      const user = await userService.getUserById(userId)
+      if(user?.error){
+        return next(new ErrorHandler(user.message, 400))
+      }
+
+      res.status(200).json({
+        success:true,
+        user
+      })
+    } catch (error) {
+      console.log(error)
+      return next(new ErrorHandler(error.message, 400))
+    }
+  }
+
+  // social authentication
+  async socialAuth(req, res, next) {
+    const { name, email, avatar} = req.body
+    try {
+      if(!name || !email || !avatar) return next(new ErrorHandler("Please enter all required fields", 400))
+
+      const user = await userService.getUser({email})
+      if(!user?.error) {
+        return next(new ErrorHandler("User already exists", 400))
+      }
+
+      const newUser = await userService.create({name, email, avatar})
+      if(newUser?.error) {
+        return next(new ErrorHandler(newUser.message, 400))
+      }
+
+      // create toekn 
+      const { accessToken, accessTokenOptions, refreshToken, refreshTokenOptions } = await tokenService.createToken({id:newUser?._id})
+
+      // set token in the cookies
+      res.cookie("accessToken", accessToken, accessTokenOptions)
+      res.cookie("refreshToken", refreshToken, refreshTokenOptions)
+
+      res.status(201).json({
+        success:true,
+        user:newUser,
+        token:accessToken
+      })
+    } catch (error) {
+      
+    }
   }
 }
 
