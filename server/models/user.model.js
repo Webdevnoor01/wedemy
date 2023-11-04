@@ -23,7 +23,7 @@ const userSchema = Schema({
         minlength:[8, "Password at least 8 characters"],
     },
     avatar:{
-        public_id:String,
+        publicId:String,
         url:String
     },
     role:{
