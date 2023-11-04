@@ -2,6 +2,7 @@ const ErrorHandler = require("../utils/errorHandler");
 const ejs = require("ejs");
 const path = require("path");
 const bcrypt = require("bcryptjs");
+const { formidable } = require("formidable");
 
 // cash database
 const { redis } = require("../utils/redis");
@@ -11,7 +12,7 @@ const User = require("../models/user.model");
 const hashService = require("../service/hash.service");
 const tokenService = require("../service/token.service");
 const mailService = require("../service/mail.service");
-const userService = require("../service/user.service")
+const userService = require("../service/user.service");
 class UserController {
   // register user
   async register(req, res, next) {
@@ -141,7 +142,6 @@ class UserController {
         return next(
           new ErrorHandler("Please enter valid email and password", 400)
         );
-
       // create token
       const {
         accessToken,
@@ -166,6 +166,7 @@ class UserController {
       });
     } catch (error) {
       console.log(error);
+      return next(new ErrorHandler(error.message, 400));
     }
   }
 
@@ -188,7 +189,7 @@ class UserController {
   // update accessToken
   async updateAccessToken(req, res, next) {
     try {
-      const { refreshToken:token } = req.cookies;
+      const { refreshToken: token } = req.cookies;
       // verify the refreshToken
       const decoded = await tokenService.verifyRefreshToken(token);
       const message = "Could not refresh the token";
@@ -199,78 +200,184 @@ class UserController {
       if (!session) return next(new ErrorHandler(message, 400));
 
       const user = JSON.parse(session);
-
       // create new token
       const {
         accessToken,
         accessTokenOptions,
         refreshToken,
         refreshTokenOptions,
-      } = await tokenService.createToken({ id: user.id });
+      } = await tokenService.createToken({ id: user._id });
 
-      // set token in the cookie 
-      res.cookie("accessToken", accessToken, accessTokenOptions)
-      res.cookie("refreshToken", refreshToken, refreshTokenOptions)
+      req.user = user;
+      // set token in the cookie
+      res.cookie("accessToken", accessToken, accessTokenOptions);
+      res.cookie("refreshToken", refreshToken, refreshTokenOptions);
 
       res.status(200).json({
-        success:true,
-        token:accessToken
-      })
+        success: true,
+        token: accessToken,
+      });
     } catch (error) {
-      console.log(error)
-      return next(new ErrorHandler(error.message, 400))
+      console.log(error);
+      return next(new ErrorHandler(error.message, 400));
     }
   }
 
-  // get user info 
+  // get user info
   async getUserInfo(req, res, next) {
-    const userId = req.user?._id || req.user?.id
+    const userId = req.user?._id || req.user?.id;
     try {
-      const user = await userService.getUserById(userId)
-      if(user?.error){
-        return next(new ErrorHandler(user.message, 400))
+      const user = await userService.getUserById(userId);
+      if (user?.error) {
+        return next(new ErrorHandler(user.message, 400));
       }
 
       res.status(200).json({
-        success:true,
-        user
-      })
+        success: true,
+        user,
+      });
     } catch (error) {
-      console.log(error)
-      return next(new ErrorHandler(error.message, 400))
+      console.log(error);
+      return next(new ErrorHandler(error.message, 400));
     }
   }
 
   // social authentication
   async socialAuth(req, res, next) {
-    const { name, email, avatar} = req.body
+    const { name, email, avatar } = req.body;
     try {
-      if(!name || !email || !avatar) return next(new ErrorHandler("Please enter all required fields", 400))
+      if (!name || !email || !avatar)
+        return next(new ErrorHandler("Please enter all required fields", 400));
 
-      const user = await userService.getUser({email})
-      if(!user?.error) {
-        return next(new ErrorHandler("User already exists", 400))
+      const user = await userService.getUser({ email });
+      if (!user?.error) {
+        return next(new ErrorHandler("User already exists", 400));
       }
 
-      const newUser = await userService.create({name, email, avatar})
-      if(newUser?.error) {
-        return next(new ErrorHandler(newUser.message, 400))
+      const newUser = await userService.create({ name, email, avatar });
+      if (newUser?.error) {
+        return next(new ErrorHandler(newUser.message, 400));
       }
 
-      // create toekn 
-      const { accessToken, accessTokenOptions, refreshToken, refreshTokenOptions } = await tokenService.createToken({id:newUser?._id})
+      // create toekn
+      const {
+        accessToken,
+        accessTokenOptions,
+        refreshToken,
+        refreshTokenOptions,
+      } = await tokenService.createToken({ id: newUser?._id });
 
       // set token in the cookies
-      res.cookie("accessToken", accessToken, accessTokenOptions)
-      res.cookie("refreshToken", refreshToken, refreshTokenOptions)
+      res.cookie("accessToken", accessToken, accessTokenOptions);
+      res.cookie("refreshToken", refreshToken, refreshTokenOptions);
 
       res.status(201).json({
-        success:true,
-        user:newUser,
-        token:accessToken
-      })
+        success: true,
+        user: newUser,
+        token: accessToken,
+      });
+    } catch (error) {}
+  }
+
+  // update user info
+  async updateUserInfo(req, res, next) {
+    const data = req.body;
+    try {
+      if (Object.keys(data).length <= 0)
+        return next(
+          new ErrorHandler("Please provide sufficient data to update user info")
+        );
+
+      if ((data?.name || data?.email) && req.user) {
+        const userId = req.user._id;
+        console.log(data);
+        const user = await userService.update(userId, data);
+        if (user.error) return next(new ErrorHandler(user.message, 500));
+
+        // set updated data into redis
+        redis.set(user._id, JSON.stringify(user));
+
+        res.status(200).json({
+          success: true,
+          message: "User info update successfully",
+        });
+      }
+    } catch (error) {}
+  }
+
+  // change password
+  async changePassword(req, res, next) {
+    const { oldPassword, newPassword } = req.body;
+    try {
+      if (!oldPassword || !newPassword)
+        return next(
+          new ErrorHandler("oldPassword and newPassword is required")
+        );
+
+      const user = await userService.getUser(
+        { _id: req.user._id },
+        "+password"
+      );
+      console.log(user);
+      if (!user?.password)
+        return next(
+          new ErrorHandler("You are not able to change your password")
+        );
+
+      const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isPasswordMatch)
+        return next(new ErrorHandler("Invalid old password", 400));
+
+      // hash the new password
+      const slat = await bcrypt.genSaltSync(10);
+      const newHashPassword = await bcrypt.hashSync(newPassword, slat);
+      const updatePassword = userService.update(user._id, {
+        password: newHashPassword,
+      });
+      if (updatePassword.error)
+        return next(new ErrorHandler(updatePassword.message));
+
+      res.status(200).json({
+        success: true,
+        message: "Password changed successfully",
+      });
+    } catch (error) {}
+  }
+
+  // update user avatar
+  async uploadAvatar(req, res, next) {
+    try {
+      const form = formidable({});
+      form.parse(req, async (err, fields, files) => {
+        try {
+          const { avatar: image } = files;
+          if (!image)
+            return next(
+              new ErrorHandler("Before uploading, please select an avatar")
+            );
+
+          const avatar = await userService.uploadImage(image[0], "avatars");
+          if (avatar.error) return next(new ErrorHandler(avatar.message, 400));
+          const userId = req?.user?._id;
+          // update the avatar into the database
+          const user = await userService.update(userId, { avatar });
+
+          // store updated user into cache(redis)
+          redis.set(userId, JSON.stringify(user));
+
+          res.status(201).json({
+            success: true,
+            message: "user avatar uploaded successfully",
+            avatar,
+          });
+        } catch (error) {
+          console.log(error);
+          return next(new ErrorHandler(error.message, 400));
+        }
+      });
     } catch (error) {
-      
+      console.log(error);
+      return next(new ErrorHandler(error.message, 400));
     }
   }
 }
