@@ -34,7 +34,7 @@ const userSchema = Schema({
         type:Boolean,
         default:false
     },
-    cources:{
+    courses:{
         type:Array,
         default:[]
     }

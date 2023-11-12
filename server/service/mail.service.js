@@ -28,8 +28,9 @@ class MailService {
 
       // finaly send the email
       transport.sendMail(mailOptions, (err, info) => {
-        if (err) console.log("mail-error-> ", err.message);
-        console.log(`mail has been sent to ${info.envelope.to}`);
+        console.log(info)
+        if (err) console.log("mail-error-> ", err);
+        console.log(`mail has been sent to`);
       });
     } catch (error) {
       console.log("mail error", error);
