@@ -19,22 +19,23 @@ class CourseService {
     }
   }
 
-  // find course data
-  /**
-   *
-   * @param {String} courseId enter the course Id
-   * @returns {{_id: String, name: String, description: String, price: Number, estimatedPrice: Number, tags: String, level: String, demoUrl: String, benifits: Array<{title: String, _id: String}>, prerequisites: Array<{title: String, _id: String}>, reviews: Array<{user: {name: String, email: String}, rating: Number, comment: String, _id: String}>, courseData: Array<{title: String, videoUrl: String, description: String, videoLength: Number, VideoPlayer: String, links: Array<{title: String, url: String, _id: String}>, suggestion: String, questions: Array<{user: {name: String, email: String}, comment: String, commentReplies: Array<{}>, _id: String}>, _id: String}>, ratings: Number, purchased: Number} | {error:Boolean, message:String}}
-   */
-  async find(courseId) {
-    try {
-      const courseData = await courseModel.findById(courseId);
-      if (!courseData) return { error: true, message: "course data not found" };
+  // // find course data
+  // /**
+  //  *
+  //  * @param {String} courseId enter the course Id
+  //  * @returns {{_id: String, name: String, description: String, price: Number, estimatedPrice: Number, tags: String, level: String, demoUrl: String, benifits: Array<{title: String, _id: String}>, prerequisites: Array<{title: String, _id: String}>, reviews: Array<{user: {name: String, email: String}, rating: Number, comment: String, _id: String}>, courseData: Array<{title: String, videoUrl: String, description: String, videoLength: Number, VideoPlayer: String, links: Array<{title: String, url: String, _id: String}>, suggestion: String, questions: Array<{user: {name: String, email: String}, comment: String, commentReplies: Array<{}>, _id: String}>, _id: String}>, ratings: Number, purchased: Number} | {error:Boolean, message:String}}
+  //  */
+  // async find(courseId) {
+  //   try {
+  //     const courseData = await courseModel.findById(courseId);
+  //     console.log("Course data: ", courseData)
+  //     if (!courseData) return { error: true, message: "course data not found" };
 
-      return courseData;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  }
+  //     return courseData;
+  //   } catch (error) {
+  //     throw new Error(error.message);
+  //   }
+  // }
   // update course data
 
   /**
@@ -95,7 +96,7 @@ class CourseService {
       if (selections) {
         courseData = await courseModel.find({}).select(selections);
       } else {
-        courseData = await courseData.find({});
+        courseData = await courseModel.find({});
       }
       if (!courseData) return { error: true, message: "Course data not found" };
 
