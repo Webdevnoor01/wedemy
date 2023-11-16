@@ -120,7 +120,19 @@ class UserController {
       return next(new ErrorHandler(error.message, 400));
     }
   }
-
+  // get all user(this for only admin)
+  async getAllUsers(req, res, next) {
+    try {
+      const users = await userService.getUsers();
+      if (users.error) return next(new ErrorHandler(users.message, 400));
+      res.status(200).json({
+        success: true,
+        users,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400))
+    }
+  }
   // login
   async login(req, res, next) {
     const { email, password } = req.body;

@@ -10,6 +10,7 @@ const imageUploadService = require("../service/imageUpload.service");
 const mailService = require("../service/mail.service");
 // models
 const courseModel = require("../models/course.model");
+const notificationService = require("../service/notification.service");
 class CourseController {
   async create(req, res, next) {
     try {
@@ -83,6 +84,21 @@ class CourseController {
     } catch (error) {
       console.log(error);
       return next(new ErrorHandler(error.message, 400));
+    }
+  }
+
+  // find all course(this for admin)
+  async getAllCourses(req, res, next){
+    try {
+      const courses = await courseService.find()
+      if(courses.error) return next(new ErrorHandler(courses.message, 400))
+
+      res.status(200).json({
+        success:true,
+        courses
+      })
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400))
     }
   }
 
@@ -220,6 +236,21 @@ class CourseController {
       courseContent.questions.push(newQuestion);
       // finaly save the new question
       await course?.save();
+
+      // create notification
+      const notificaitonPayload = {
+        title: "New Question",
+        message: `You have a new questin in ${course?.name}`,
+        user: {
+          name: req?.user?.name,
+          email: req?.user?.email,
+          avatar: req?.user?.avatar,
+          role: req?.user?.role,
+        },
+      };
+      const notification = await notificationService.create(
+        notificaitonPayload
+      );
 
       res.status(200).json({
         success: true,
@@ -385,7 +416,7 @@ class CourseController {
           name: req?.user?.name,
           email: req?.user?.email,
           avatar: req?.user?.avatar,
-          role:req?.user?.role,
+          role: req?.user?.role,
           id: req?.user?._id,
         },
         rating,
@@ -407,13 +438,20 @@ class CourseController {
       course.save();
 
       // nwo send the notification
-      const notificationPayload = {
-        title: "New reviewed recived",
-        message: `${req?.user?.name} has given a review in ${course?.name}`,
+
+      const notificaitonPayload = {
+        title: "New Review",
+        message: `You have a new review in ${course?.name}`,
+        user: {
+          name: req?.user?.name,
+          email: req?.user?.email,
+          avatar: req?.user?.avatar,
+          role: req?.user?.role,
+        },
       };
-
-      // TODO: create notification
-
+      const notification = await notificationService.create(
+        notificaitonPayload
+      );
       res.status(201).json({
         success: true,
         message: "Review added successfully",

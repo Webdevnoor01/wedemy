@@ -24,7 +24,7 @@ class UserService {
     }
   }
 
-  // get user by user id
+  // get single user by user id
   /**
    *
    * @param {*} userId enter user id
@@ -46,7 +46,7 @@ class UserService {
     }
   }
 
-  // get user by payload. payload will be an object.
+  // get single user by payload. payload will be an object.
   /**
    *
    * @param {String} payload enter user id
@@ -69,6 +69,26 @@ class UserService {
     }
   }
 
+  // get all user 
+  /**
+   * 
+   * @returns {Array<{_id:String,name:String, email:String, avatar:object, role:String, isVerified:String, cources:Array, createdAt:Date, updatedAt:Date} | {error:Boolean, message:string}> | {error:Boolean, message:String}}
+   */
+  async getUsers(){
+    try {
+      const users = await userModel.find({}).select("-password").sort({createdAt:1})
+      if (users.length <=0) {
+        return {
+          error: true,
+          message: "users not found",
+        };
+      }
+
+      return users;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
   // update user info
   /**
    *
@@ -124,6 +144,7 @@ class UserService {
       throw new Error(error.message);
     }
   }
+
 }
 
 module.exports = new UserService();
