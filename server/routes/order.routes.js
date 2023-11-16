@@ -12,4 +12,11 @@ orderRouter.post(
   orderController.create
 );
 
+orderRouter.get(
+  "/get",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  orderController.getAllOrders
+);
+
 module.exports = orderRouter;

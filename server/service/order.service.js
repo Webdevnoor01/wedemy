@@ -20,6 +20,21 @@ class OrderService {
         throw new Error(error.message)
     }
   }
+
+  // get all orders
+  /**
+   * 
+   * @returns {Array<{courseId:String, userId:String, paymentInfo?:String, _id:Types.ObjectId}> | {error:Boolean, message:String}}
+   */
+  async getOrders(){
+    try {
+      const orders = await orderModel.find({}).sort({createdAt:-1})
+      if(orders.length <= 0) return {error:true, message:"Orders not found"}
+      return orders
+    } catch (error) {
+      throw new Error(error.message)
+    }
+  }
 }
 
 module.exports = new OrderService();

@@ -13,6 +13,12 @@ courseRouter.post(
   authMiddleware.authorizeRole("admin"),
   courseController.create
 );
+courseRouter.get(
+  "/get",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  courseController.getAllCourses
+);
 courseRouter.patch(
   "/update/:courseId",
   authMiddleware.isAuthenticated,

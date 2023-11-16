@@ -10,6 +10,7 @@ const orderService = require("../service/order.service");
 const notificationService = require("../service/notification.service");
 const { redis } = require("../utils/redis");
 class OrderController {
+  // create order
   async create(req, res, next) {
     const courseId = req.params.courseId;
     const userId = req.user?._id;
@@ -21,7 +22,7 @@ class OrderController {
       // is course exist
       const course = await courseService.findById(courseId);
       if (course.error) return next(new ErrorHandler(course.message, 400));
-      
+
       // check that user already purchesed the course
       const isCourseExistInUser = user.courses?.find(
         (course) => course.id === courseId
@@ -43,8 +44,8 @@ class OrderController {
 
       // update course purchased
       await courseService.update(courseId, {
-        purchased:course.purchased+1
-      })
+        purchased: course.purchased + 1,
+      });
       // update user courselist
       const userCourseUpdate = await userService.update(userId, {
         $push: { courses: { id: courseId } },
@@ -52,7 +53,7 @@ class OrderController {
       // send mail to the user
       const mailData = {
         data: {
-          user:user.name,
+          user: user.name,
           id: course._id,
           courseName: course.name,
           price: course.price,
@@ -101,11 +102,11 @@ class OrderController {
       );
       if (newNotification.error)
         return next(new ErrorHandler(newNotification.message, 400));
-      
+
       // set all courses into cache
-      const allCourses = await courseService.find()
-      redis.set("allCourses", JSON.stringify(allCourses))
-      
+      const allCourses = await courseService.find();
+      redis.set("allCourses", JSON.stringify(allCourses));
+
       // send the response
       res.status(201).json({
         success: true,
@@ -115,6 +116,20 @@ class OrderController {
     } catch (error) {
       console.log(error);
       return next(new ErrorHandler(error.message, 400));
+    }
+  }
+
+  // get all order(this for only admin)
+  async getAllOrders(req, res, next) {
+    try {
+      const orders = await orderService.getOrders();
+      if (orders.error) return next(new ErrorHandler(orders.message, 400));
+      res.status(200).json({
+        success: true,
+        orders,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400))
     }
   }
 }
