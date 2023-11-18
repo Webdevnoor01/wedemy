@@ -63,5 +63,11 @@ courseRouter.patch(
   authMiddleware.authorizeRole("admin"),
   courseController.addReviewReply
 );
+courseRouter.delete(
+  "/delete",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  courseController.deleteCourse
+);
 
 module.exports = courseRouter;

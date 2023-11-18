@@ -106,6 +106,22 @@ class CourseService {
     }
   }
 
+  // delet single course
+   /**
+   * 
+   * @param {String} courseId enter user id
+   * @returns {{anknoledged:Boolean, deleteCount:Number} | {error:Boolean, message:String}}
+   */
+  async delete(courseId) {
+    try {
+      const course = await courseModel.deleteOne({_id: courseId})
+      console.log(course)
+      if(!course.acknowledged) return {error:true, message:"Error to delete course"}
+      return course 
+    } catch (error) {
+      throw new Error(error.message)
+    }
+  }
 
 }
 

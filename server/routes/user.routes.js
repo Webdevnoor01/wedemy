@@ -37,10 +37,22 @@ userRouter.patch(
 );
 
 userRouter.get(
-    "/user/get",
-    authMiddleware.isAuthenticated,
-    authMiddleware.authorizeRole("admin"),
-    userController.getAllUsers
-  );
+  "/user/get",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  userController.getAllUsers
+);
 
+userRouter.patch(
+  "/user/update-role",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  userController.updateUserRole
+);
+userRouter.delete(
+  "/user/delete",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  userController.deleteUser
+);
 module.exports = userRouter;

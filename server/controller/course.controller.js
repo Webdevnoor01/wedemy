@@ -88,7 +88,7 @@ class CourseController {
   }
 
   // find all course(this for admin)
-  async getAllCourses(req, res, next){
+  async getAllCourses(_req, res, next){
     try {
       const courses = await courseService.find()
       if(courses.error) return next(new ErrorHandler(courses.message, 400))
@@ -529,6 +529,32 @@ class CourseController {
     } catch (error) {
       console.log(error);
       return next(new ErrorHandler(error.message, 400));
+    }
+  }
+
+  // delete course (this only for admin)
+  async deleteCourse(req, res, next) {
+    const {courseId} = req.body
+    try {
+      const isCourseExist = await courseService.findById(courseId)
+      if(isCourseExist.error) return next(new ErrorHandler(isCourseExist.message, 400))
+
+      // delete course
+      const course = await courseService.delete(courseId)
+      if(course.error) return next(new ErrorHandler(course.message, 400))
+
+      // delete course from cache
+      const isCourseCacheExist = await redis.get(courseId)
+      if(isCourseCacheExist){
+       await redis.del(courseId)
+      }
+
+      res.status(200).json({
+        success:true, 
+        message:"course deleted successfully"
+      })
+    } catch (error) {
+      return next(new ErrorHandler(error.message))
     }
   }
 }

@@ -145,6 +145,24 @@ class UserService {
     }
   }
 
+
+  // delete user
+  /**
+   * 
+   * @param {String} userId enter user id
+   * @returns {{anknoledged:Boolean, deleteCount:Number} | {error:Boolean, message:String}}}
+   */
+  async delete(userId) {
+    try {
+      const user = await userModel.deleteOne({_id:userId})
+      console.log(user)
+      if(!user) return {error:true, message:"Error to delete user"}
+
+      return user
+    } catch (error) {
+      throw new Error(error.message)
+    }
+  }
 }
 
 module.exports = new UserService();
