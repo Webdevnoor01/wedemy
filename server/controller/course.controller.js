@@ -89,6 +89,7 @@ class CourseController {
 
   // find all course(this for admin)
   async getAllCourses(_req, res, next){
+
     try {
       const courses = await courseService.find()
       if(courses.error) return next(new ErrorHandler(courses.message, 400))
