@@ -392,6 +392,56 @@ class UserController {
       return next(new ErrorHandler(error.message, 400));
     }
   }
+
+    // Update user role (this only for admin)
+    async updateUserRole(req, res, next){
+      const {userId, role} = req.body
+      try {
+        // Make sure userId and role are provided as the body data
+        if(!userId || !role) return next(new ErrorHandler("userId and role are required", 400))
+        
+        const isUserExist = await userService.getUser({_id:userId})
+        if(isUserExist.error) return next(new ErrorHandler(isUserExist.message, 400))
+
+        // update role 
+        const newUserRole = await userService.update(userId, {role})
+        if(newUserRole.error) return next(new ErrorHandler(newUserRole.message, 400))
+
+        res.status(200).json({
+          success:true,
+          message:`${newUserRole.name}'s role was ${isUserExist.role} now it's assigned to ${newUserRole.role}  `
+        })
+      } catch (error) {
+        return next(new ErrorHandler(error.message))
+      }
+    }
+
+    // delet user from the database (this only for admin)
+    async deleteUser(req, res, next) {
+      const {userId} = req.body
+      try {
+        const isUserExist = await userService.getUser({_id:userId})
+        if(isUserExist.error) return next(new ErrorHandler(isUserExist.message, 400))
+
+        // delete user 
+        const deleteUser = await userService.delete(userId)
+        if(deleteUser.error) return next(new ErrorHandler(deleteUser.message, 400))
+
+        // delet user from the cache if have
+        const isCachedUser = await redis.get(userId)
+        if(isCachedUser){
+          redis.del(userId)
+        }
+
+        res.status(200).json({
+          success:true,
+          message:"User deleted successfully"
+        })
+      } catch (error) {
+        console.log(error)
+        return next(new ErrorHandler(error.message))
+      }
+    }
 }
 
 module.exports = new UserController();
