@@ -7,6 +7,8 @@ const authMiddleware = require("../middleware/authentication");
 const courseController = require("../controller/course.controller");
 
 // routes
+
+// ##################->Admin Routes<-####################\\
 courseRouter.post(
   "/create",
   authMiddleware.isAuthenticated,
@@ -25,6 +27,35 @@ courseRouter.patch(
   authMiddleware.authorizeRole("admin"),
   courseController.update
 );
+courseRouter.patch(
+  "/add/question-reply/:courseId",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  courseController.addQuestionsReply
+);
+courseRouter.patch(
+  "/add/review-reply/:courseId",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  courseController.addReviewReply
+);
+courseRouter.delete(
+  "/delete",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  courseController.deleteCourse
+);
+courseRouter.get(
+  "/analytics",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  courseController.getCourseAnalytics
+);
+
+// ###################################################\\
+
+
+// ##################->Users Routes<-####################\\
 courseRouter.get(
   "/find/:courseId",
   authMiddleware.isAuthenticated,
@@ -46,28 +77,12 @@ courseRouter.patch(
   authMiddleware.isAuthenticated,
   courseController.addQuestion
 );
-courseRouter.patch(
-  "/add/question-reply/:courseId",
-  authMiddleware.isAuthenticated,
-  authMiddleware.authorizeRole("admin"),
-  courseController.addQuestionsReply
-);
+
 courseRouter.patch(
   "/add/review/:courseId",
   authMiddleware.isAuthenticated,
   courseController.addReview
 );
-courseRouter.patch(
-  "/add/review-reply/:courseId",
-  authMiddleware.isAuthenticated,
-  authMiddleware.authorizeRole("admin"),
-  courseController.addReviewReply
-);
-courseRouter.delete(
-  "/delete",
-  authMiddleware.isAuthenticated,
-  authMiddleware.authorizeRole("admin"),
-  courseController.deleteCourse
-);
+// #####################################################\\
 
 module.exports = courseRouter;
