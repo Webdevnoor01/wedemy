@@ -11,6 +11,7 @@ const mailService = require("../service/mail.service");
 // models
 const courseModel = require("../models/course.model");
 const notificationService = require("../service/notification.service");
+const generateLast12MonthsData = require("../utils/analytic.generator");
 class CourseController {
   async create(req, res, next) {
     try {
@@ -553,6 +554,19 @@ class CourseController {
       res.status(200).json({
         success:true, 
         message:"course deleted successfully"
+      })
+    } catch (error) {
+      return next(new ErrorHandler(error.message))
+    }
+  }
+
+  // get course analytics(This for only admin)
+  async getCourseAnalytics(req, res, next){
+    try {
+      const data = await generateLast12MonthsData(courseModel)
+      res.status(200).json({
+        success:true,
+        courseData:data
       })
     } catch (error) {
       return next(new ErrorHandler(error.message))

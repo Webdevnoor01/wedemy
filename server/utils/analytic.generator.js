@@ -20,13 +20,13 @@ const generateLast12MonthsData = async (model) => {
       month: "short",
       year: "numeric",
     });
-    const totalUser = await model.countDocuments({
+    const count = await model.countDocuments({
       createdAt: {
         $gte: startDate,
         $lt: endDate,
       },
     });
-    last12MonthsData.push({ month: monthYear, totalUser });
+    last12MonthsData.push({ month: monthYear, count });
   }
 
   return { last12MonthsData };
