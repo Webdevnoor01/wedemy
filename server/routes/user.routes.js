@@ -55,4 +55,10 @@ userRouter.delete(
   authMiddleware.authorizeRole("admin"),
   userController.deleteUser
 );
+userRouter.get(
+  "/user/analytics",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  userController.getUserAnalytics
+);
 module.exports = userRouter;
