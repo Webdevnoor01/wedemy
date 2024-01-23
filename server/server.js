@@ -15,5 +15,5 @@ db.connect(process.env.DATABASE_CONNECTION_URL).then(() => {
         console.log("server listening on ", port)
     })
 }).catch((e) => {
-    console.log(e)
+    console.log( "server error: ",e)
 })
