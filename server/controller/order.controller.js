@@ -9,6 +9,11 @@ const userService = require("../service/user.service");
 const orderService = require("../service/order.service");
 const notificationService = require("../service/notification.service");
 const { redis } = require("../utils/redis");
+
+// utils
+const generateLast12MonthsData = require("../utils/analytic.generator");
+// models
+const orderModel = require("../models/order.model");
 class OrderController {
   // create order
   async create(req, res, next) {
@@ -120,7 +125,7 @@ class OrderController {
   }
 
   // get all order(this for only admin)
-  async getAllOrders(req, res, next) {
+  async getAllOrders(_req, res, next) {
     try {
       const orders = await orderService.getOrders();
       if (orders.error) return next(new ErrorHandler(orders.message, 400));
@@ -130,6 +135,19 @@ class OrderController {
       });
     } catch (error) {
       return next(new ErrorHandler(error.message, 400))
+    }
+  }
+
+  // get last 12 month data of order analytich(this for only admin)
+  async getOrderAnalytics(req, res, next){
+    try {
+      const orderData = await generateLast12MonthsData(orderModel)
+      res.status(200).json({
+        success:true,
+        data:orderData
+      })
+    } catch (error) {
+      return next(new ErrorHandler(error.message))
     }
   }
 }

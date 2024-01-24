@@ -18,5 +18,11 @@ orderRouter.get(
   authMiddleware.authorizeRole("admin"),
   orderController.getAllOrders
 );
+orderRouter.get(
+  "/analytics",
+  authMiddleware.isAuthenticated,
+  authMiddleware.authorizeRole("admin"),
+  orderController.getOrderAnalytics
+);
 
 module.exports = orderRouter;
