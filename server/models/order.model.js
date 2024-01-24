@@ -13,6 +13,8 @@ const orderSchema = new Schema({
         type:Object,
         // required:true
     }
+},{
+    timestamps:true
 })
 
 module.exports = model("Obder", orderSchema)
