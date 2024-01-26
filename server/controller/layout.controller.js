@@ -23,8 +23,9 @@ class LayoutController {
             const layoutTitle = title[0] || title;
             let layoutSbuTitle;
             if (subTitle) layoutSbuTitle = subTitle[0] || subTitle;
-
+ 
             if (layoutType.toLowerCase() === "banner") {
+
               if (!bannerImg)
                 return next(new ErrorHandler("please select an image", 400));
 
@@ -160,6 +161,7 @@ class LayoutController {
       return next(new ErrorHandler(error.message, 500))
     }
   }
+
 }
 
 module.exports = new LayoutController();
