@@ -23,9 +23,8 @@ class LayoutController {
             const layoutTitle = title[0] || title;
             let layoutSbuTitle;
             if (subTitle) layoutSbuTitle = subTitle[0] || subTitle;
-            
-            if (layoutType.toLowerCase() === "banner") {
 
+            if (layoutType.toLowerCase() === "banner") {
               if (!bannerImg)
                 return next(new ErrorHandler("please select an image", 400));
 
@@ -138,6 +137,27 @@ class LayoutController {
       }
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
+    }
+  }
+
+  // get layout by type
+  async getLayoutByType(req, res, next) {
+    try {
+      const layoutData = await layoutModel.findOne({ type: req.body.type });
+      if (!layoutData)
+        return next(
+          new ErrorHandler(
+            `Layout data not found with the type ${req.body.type}`,
+            404
+          )
+        );
+      
+      res.status(200).json({
+        success:true, 
+        data:layoutData
+      })
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500))
     }
   }
 }

@@ -11,5 +11,9 @@ layoutRouter.post(
   authMiddleware.authorizeRole("admin"),
   layoutController.create
 );
+layoutRouter.get(
+  "/get",
+  layoutController.getLayoutByType
+);
 
 module.exports = layoutRouter;
