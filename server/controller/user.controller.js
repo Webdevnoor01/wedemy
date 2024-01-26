@@ -205,7 +205,7 @@ class UserController {
       const { refreshToken: token } = req.cookies;
       // verify the refreshToken
       const decoded = await tokenService.verifyRefreshToken(token);
-      const message = "Could not refresh the token";
+      const message = "Please login to access this resources";
       if (!decoded) return next(new ErrorHandler(message, 400));
 
       // check the session-> user is valid or not
@@ -225,6 +225,8 @@ class UserController {
       // set token in the cookie
       res.cookie("accessToken", accessToken, accessTokenOptions);
       res.cookie("refreshToken", refreshToken, refreshTokenOptions);
+      
+      await redis.set(user._id, JSON.stringify(user), "EX", 604800)
 
       res.status(200).json({
         success: true,

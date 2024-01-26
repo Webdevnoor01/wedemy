@@ -125,7 +125,7 @@ class CourseController {
           "-courseData.videoUrl -courseData.suggestation -courseData.links -courseData.questions"
         );
         if (course.error) return next(new ErrorHandler(course.message));
-        await redis.set(courseId, JSON.stringify(course));
+        await redis.set(courseId, JSON.stringify(course), "EX", 604800);
         return res.status(200).json({
           success: true,
           data: course,
